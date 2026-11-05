@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sumplus · TapeOut wallet steps</title>
+<style>body{background:#101925;color:#e8edf6;font:16px system-ui;max-width:800px;margin:40px auto;padding:20px}h1{font-size:30px}p{line-height:1.6;color:#c2cedd}button,select,input{font:inherit;margin:8px 8px 8px 0;padding:10px;max-width:100%}button{cursor:pointer}pre,output{display:block;white-space:pre-wrap;overflow-wrap:anywhere;background:#192738;padding:16px;border-radius:8px}label{display:block;margin-top:20px}a{color:#8ee5d4}</style>
+<h1>TapeOut container · user signing</h1>
+<p>Studio wallet <strong>0x91000b484b5d4d5ba888c8a2f5dbdbbbcbf788d2</strong><br>X Layer 196 · processor 409 · total workflow budget 0.09 OKB</p>
+<p>Connect your wallet, import the next verified plan and review one transaction. After it confirms, give its transaction hash to the operator to prepare the next plan. Keep the gas limit and gas price shown in the wallet prompt.</p>
+<label>Injected wallet<select id="providers"></select></label><button id="discover">Discover wallets</button><button id="connect">Connect selected wallet</button><button id="switch">Switch to X Layer</button>
+<label>Verified step plan JSON<input id="plan" type="file" accept=".json"></label>
+<pre id="review">Import wallet-plan-409.json for the first mint.</pre>
+<button id="sign" disabled>Review and sign this step in wallet</button>
+<output id="status" aria-live="polite">Waiting for a wallet and plan.</output>
+<script type="module">
+const WALLET="0x91000b484b5d4d5ba888c8a2f5dbdbbbcbf788d2";
+const CPU="0x39e44dba62811e87fde122ca4d6c082568a384d0";
+const TRANSISTORS="0x5d7e99c4d1b71f4d24c9d53f41aed8196064a61f";
+const OPENER="0x536add8f30f03b69f6fbf29d425a816a0dc50106";
+const REGISTRY="0xd6efb7adcc9c83dc4924ad56f6a8e4e969b9adb6";
+const CONTAINER="0xde9a54ecaf32e6406fba0fcd78153ddc6777a63b";
+const IMPLEMENTATION="0x000000000000000000000000a85c4143d1d4a77f54b8e4ecc9e6d1418afea45f";
+const IMPLEMENTATION_SLOT="0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc";
+const BUDGET=90000000000000000n;
+const MINT_DATA="0x1b2ef1ca"+"0".repeat(127)+"1";
+const TAPEOUT_DATA="0x7bd3ac1d00000000000000000000000000000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000070000000200000300000000000000000000000000000000000000000000000000";
+const OPEN_PREFIX="0x0a0e5c9d"+CPU.slice(2).padStart(64,"0");
+const JOURNAL="sumplus-tapeout-409-"+WALLET;
+const nodes=Object.fromEntries(["providers","connect","plan","review","sign","status","discover","switch"].map(id=>[id,document.getElementById(id)]));
+const providers=[];
+let provider, plan, busy=false;
+const check=(value,message)=>{if(!value)throw new Error(message)};
+const okb=value=>{const n=BigInt(value);return (n/10n**18n)+"."+(n%10n**18n).toString().padStart(18,"0")};
+function quantityError(field,value,reason){
+ const type=value===null?"null":typeof value;
+ let preview;
+ try{preview=typeof value==="bigint"?value.toString():JSON.stringify(value)?.slice(0,100)}catch{preview="[unserializable]"}
+ throw new Error("Invalid quantity at "+field+" (type "+type+", value "+preview+"). "+reason);
+}
+function quantity(value,field){
+ if(typeof value!=="string"||!/^0x[0-9a-f]{1,64}$/i.test(value))quantityError(field,value,"Expected hexadecimal plan quantity.");
+ return BigInt(value);
+}
+function rpcQuantity(value,field){
+ if(typeof value==="number"&&Number.isSafeInteger(value)&&value>=0)return BigInt(value);
+ if(typeof value!=="string"||!/^0x[0-9a-f]{1,64}$/i.test(value))quantityError(field,value,"Expected hexadecimal RPC quantity or nonnegative safe integer.");
+ return BigInt(value);
+}
+function announce(detail){
+ if(!detail?.provider?.request||providers.some(item=>item.provider===detail.provider))return;
+ providers.push(detail);
+ const option=document.createElement("option");option.value=String(providers.length-1);option.textContent=detail.info?.name||"Injected wallet";nodes.providers.append(option);
+}
+window.addEventListener("eip6963:announceProvider",event=>announce(event.detail));
+function discover(){
+ window.dispatchEvent(new Event("eip6963:requestProvider"));
+ for(const injected of window.ethereum?.providers||[window.ethereum])if(injected)announce({provider:injected,info:{name:injected.isMetaMask?"MetaMask":injected.isOkxWallet?"OKX Wallet":"Injected wallet"}});
+}
+function update(){nodes.sign.disabled=busy||!provider||!plan;nodes.connect.disabled=busy;nodes.switch.disabled=busy;nodes.plan.disabled=busy;nodes.providers.disabled=busy}
+async function read(method,params=[]){return provider.request({method,params})}
+async function identity(){
+ check(rpcQuantity(await read("eth_chainId"),"eth_chainId")===196n,"Select X Layer (196) in your wallet, then reconnect.");
+ const accounts=await read("eth_accounts");
+ check(accounts[0]?.toLowerCase()===WALLET,"Select the designated studio wallet in your wallet application.");
+}
+function validPlan(value){
+ check(value.chainId===196&&value.processorIndex===409&&value.processor===CPU&&value.transistors===TRANSISTORS,"Unexpected processor or chain");
+ const step=value.walletStep;check(step&&["mint","tapeout","open","publish"].includes(step.stage),"Expected a verified wallet step");
+ const tx=step.transaction;
+ check(tx?.from===WALLET&&quantity(tx.chainId,"plan.chainId")===196n&&Object.keys(tx).sort().join(",")==="chainId,data,from,gas,gasPrice,nonce,to,value","Unexpected transaction fields");
+ for(const key of ["gas","gasPrice","nonce","value"])quantity(tx[key],"plan."+key);
+ check(typeof tx.data==="string"&&/^0x[a-f0-9]+$/.test(tx.data),"Invalid calldata");
+ if(step.stage==="mint")check(tx.to===TRANSISTORS&&tx.data===MINT_DATA,"Expected one NAND mint");
+ if(step.stage==="tapeout"){
+  check(tx.to===CPU&&tx.data===TAPEOUT_DATA,"Unexpected tapeout calldata");
+  check(value.netlist?.bytes==="0x00000002000003"&&value.netlist.inputs===2&&value.netlist.outputs===1,"Unexpected netlist");
+ }
+ if(step.stage==="open"){
+  check(value.resolvedCircuit?.opened===false&&BigInt(value.resolvedCircuit.id)>0n,"Expected an unopened verified receipt circuit");
+  check(tx.to===OPENER&&tx.data===OPEN_PREFIX+BigInt(value.resolvedCircuit.id).toString(16).padStart(64,"0"),"Opening calldata does not match receipt circuit");
+ }
+ if(step.stage==="publish"){
+  const publication=value.publication;
+  check(value.resolvedCircuit?.opened===true&&value.resolvedCircuit.id==="2"&&value.resolvedCircuit.container===CONTAINER,"Expected the opened studio circuit");
+  check(publication?.container===CONTAINER&&publication.registry===REGISTRY&&publication.implementation===IMPLEMENTATION&&publication.existingChunks===0,"Unexpected publication target");
+  check(tx.to===REGISTRY&&quantity(tx.value,"plan.value")===0n&&tx.data.startsWith("0xfab2ed82"),"Expected a zero-value SiteRegistry file publication");
+ }
+ const prior=BigInt(step.previousActualSpendWei),future=BigInt(step.futureReservedValueWei);
+ check(prior>=0n&&future>=0n&&BigInt(step.budgetWei)===BUDGET,"Unexpected budget");
+ check(BigInt(step.maxGasFeeWei)===quantity(tx.gas,"plan.gas")*quantity(tx.gasPrice,"plan.gasPrice"),"Displayed gas ceiling differs from the transaction");
+ check(prior+quantity(tx.value,"plan.value")+quantity(tx.gas,"plan.gas")*quantity(tx.gasPrice,"plan.gasPrice")+future<=BUDGET,"Budget would exceed 0.09 OKB");
+ check(prior+quantity(tx.value,"plan.value")+quantity(tx.gas,"plan.gas")*quantity(tx.gasPrice,"plan.gasPrice")+future===BigInt(step.maxTotalWithFutureValuesWei),"Budget arithmetic mismatch");
+ return value;
+}
+async function verifyPublication(value){
+ if(value.walletStep.stage!=="publish")return;
+ const {publication}=value,payload=value.walletStep.transaction.data.slice(10);
+ check(payload.length%64===0&&payload.length<=50000,"Unexpected publication calldata length");
+ const word=index=>payload.slice(index*64,(index+1)*64);
+ check(word(0)===CONTAINER.slice(2).padStart(64,"0"),"Calldata container differs from the studio container");
+ const dynamic=index=>{
+  const offset=BigInt("0x"+word(index));
+  check(offset>=160n&&offset%32n===0n&&offset*2n+64n<=BigInt(payload.length),"Invalid publication argument offset");
+  const start=Number(offset)*2;
+  const length=BigInt("0x"+payload.slice(start,start+64));
+  check(length<=24000n&&BigInt(start+64)+length*2n<=BigInt(payload.length),"Publication argument exceeds calldata");
+  return Uint8Array.from(payload.slice(start+64,start+64+Number(length)*2).match(/../g)||[],byte=>parseInt(byte,16));
+ };
+ const decoder=new TextDecoder("utf-8",{fatal:true});
+ const path=decoder.decode(dynamic(1)),contentType=decoder.decode(dynamic(2)),html=dynamic(4);
+ check(/^v[1-9][0-9]*(?:\.[0-9]+){0,2}\/index\.html$/.test(path)&&path===publication.path&&path.length<=80,"Unexpected versioned publication path");
+ check(contentType==="text/html"&&publication.contentType===contentType,"Unexpected publication content type");
+ check(html.length>0&&html.length<=24000&&html.length===publication.size,"Unexpected release HTML size");
+ const hash="0x"+Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256",html)),byte=>byte.toString(16).padStart(2,"0")).join("");
+ check(hash===publication.sha256&&hash==="0x"+word(3),"HTML SHA-256 differs from the approved publication plan");
+}
+function fileInfoCalldata(path){
+ const bytes=new TextEncoder().encode(path);
+ const data=Array.from(bytes,byte=>byte.toString(16).padStart(2,"0")).join("");
+ return "0x6c609107"+CONTAINER.slice(2).padStart(64,"0")+(64).toString(16).padStart(64,"0")+
+  bytes.length.toString(16).padStart(64,"0")+data.padEnd(Math.ceil(bytes.length/32)*64,"0");
+}
+nodes.discover.onclick=discover;
+nodes.connect.onclick=async()=>{
+ try{
+  provider=providers[Number(nodes.providers.value)]?.provider;check(provider,"No injected wallet found. Open this local page in the browser profile with your wallet extension.");
+  await read("eth_requestAccounts");await identity();nodes.status.textContent="Connected studio wallet on X Layer. Import and review the next plan.";
+ }catch(error){provider=undefined;nodes.status.textContent=error.message}update();
+};
+nodes.switch.onclick=async()=>{
+ if(busy)return;busy=true;update();
+ try{
+  provider=providers[Number(nodes.providers.value)]?.provider;
+  check(provider,"Discover and select your injected wallet first.");
+  await read("wallet_switchEthereumChain",[{chainId:"0xc4"}]);
+  await identity();
+  nodes.status.textContent="Connected studio wallet on X Layer. Import and review the next plan.";
+ }catch(error){provider=undefined;nodes.status.textContent=error.code===4001?"4001: "+error.message:error.message}
+ finally{busy=false;update()}
+};
+nodes.plan.onchange=async()=>{
+ plan=undefined;
+ try{
+  const file=nodes.plan.files[0];check(file&&file.size<=65536,"Expected a plan JSON under 64 KiB");const candidate=validPlan(JSON.parse(await file.text()));await verifyPublication(candidate);plan=candidate;
+  const s=plan.walletStep;
+  nodes.review.textContent=(s.stage==="publish"?"Publication path: "+plan.publication.path+"\nHTML SHA-256: "+plan.publication.sha256+"\nRegistry: "+REGISTRY+"\n\n":"")+"Step: "+s.stage+"\nPrior verified spend: "+okb(s.previousActualSpendWei)+" OKB\nCurrent value: "+okb(s.transaction.value)+" OKB\nCurrent maximum gas fee: "+okb(s.maxGasFeeWei)+" OKB\nFuture reserved transaction values: "+okb(s.futureReservedValueWei)+" OKB\nMaximum total including this step and future values: "+okb(s.maxTotalWithFutureValuesWei)+" OKB\nFuture gas is estimated before each later step.\n\n"+JSON.stringify(s.transaction,null,2);
+ }catch(error){nodes.status.textContent=error.message}update();
+};
+nodes.sign.onclick=async()=>{
+ if(busy)return;busy=true;update();
+ try{
+  check(navigator.locks,"Use a browser with Web Locks support.");
+  await navigator.locks.request(JOURNAL,{ifAvailable:true},async lock=>{
+   check(lock,"Another tab is handling this wallet step.");await identity();validPlan(plan);await verifyPublication(plan);
+   const s=plan.walletStep,tx=s.transaction;
+   const previous=JSON.parse(localStorage.getItem(JOURNAL)||"null");
+   check(!previous||quantity(previous.nonce,"journal.nonce")!==quantity(tx.nonce,"plan.nonce"),"This nonce already has a submitted or unresolved wallet request. Reconcile its transaction hash before retrying.");
+   const latest=await read("eth_getTransactionCount",[WALLET,"latest"]),pending=await read("eth_getTransactionCount",[WALLET,"pending"]);
+   check(rpcQuantity(latest,"eth_getTransactionCount.latest")===quantity(tx.nonce,"plan.nonce")&&rpcQuantity(pending,"eth_getTransactionCount.pending")===quantity(tx.nonce,"plan.nonce"),"Wallet nonce changed or a transaction is pending. Ask the operator for an updated plan.");
+   const block=rpcQuantity(await read("eth_blockNumber"),"eth_blockNumber");check(block-BigInt(plan.block)<=300n,"Plan is stale. Ask the operator to refresh it.");
+   const balance=rpcQuantity(await read("eth_getBalance",[WALLET,"latest"]),"eth_getBalance.latest");
+   check(balance>=quantity(tx.value,"plan.value")+quantity(tx.gas,"plan.gas")*quantity(tx.gasPrice,"plan.gasPrice")+BigInt(s.futureReservedValueWei),"Insufficient wallet balance for this step and reserved future values");
+   check(rpcQuantity(await read("eth_estimateGas",[tx]),"eth_estimateGas")<=quantity(tx.gas,"plan.gas"),"Gas estimate increased. Refresh the plan.");
+   check(rpcQuantity(await read("eth_gasPrice"),"eth_gasPrice")<=quantity(tx.gasPrice,"plan.gasPrice"),"Gas price increased. Refresh the plan.");
+   const getter=async(to,data)=>{const value=await read("eth_call",[{to,data},"latest"]);if(typeof value!=="string"||!/^0x[a-f0-9]{64}$/i.test(value))quantityError("eth_call.fee."+data,value,"Expected ABI uint256 bytes.");return BigInt(value)};
+   if(s.stage==="publish"){
+    check(await read("eth_getStorageAt",[REGISTRY,IMPLEMENTATION_SLOT,"latest"])===IMPLEMENTATION,"SiteRegistry implementation changed.");
+    const info=await read("eth_call",[{to:REGISTRY,data:fileInfoCalldata(plan.publication.path)},"latest"]);
+    check(typeof info==="string"&&/^0x[a-f0-9]+$/i.test(info)&&info.length>=322&&BigInt("0x"+info.slice(258,322))===0n,"Publication path is occupied or metadata is invalid. Overwrites are refused.");
+    check(await getter(CONTAINER,"0x8da5cb5b")===BigInt(WALLET),"Studio container ownership changed.");
+   }else{
+    const fee=s.stage==="mint"?await getter(TRANSISTORS,"0x6817c76c")+await getter(TRANSISTORS,"0xb0e21e8a"):
+     s.stage==="tapeout"?await getter(CPU,"0xadfb2b69"):await getter(OPENER,"0xc57981b5");
+    check(fee===quantity(tx.value,"plan.value"),"Protocol fee changed. Refresh the plan.");
+   }
+   localStorage.setItem(JOURNAL,JSON.stringify({nonce:tx.nonce,stage:s.stage,status:"awaiting-wallet",transaction:tx}));
+   nodes.status.textContent="Review the exact transaction in your wallet. Keep its gas limit and price unchanged.";
+   let hash;
+   try{hash=await read("eth_sendTransaction",[tx])}catch(error){
+    if(error.code===4001)localStorage.removeItem(JOURNAL);
+    throw error;
+   }
+   check(typeof hash==="string"&&/^0x[a-f0-9]{64}$/i.test(hash),"Wallet returned no transaction hash. Reconcile the request in the wallet.");
+   localStorage.setItem(JOURNAL,JSON.stringify({nonce:tx.nonce,stage:s.stage,status:"submitted",hash,transaction:tx}));
+   nodes.status.textContent="Submitted "+s.stage+" transaction\n"+hash+"\nGive this hash to the operator. The next step requires a verified confirmed receipt.";
+   plan=undefined;
+  });
+ }catch(error){
+  let diagnostic="";
+  if(provider&&plan?.walletStep?.transaction?.nonce){
+   try{
+    const [latest,pending]=await Promise.all([
+     read("eth_getTransactionCount",[WALLET,"latest"]),read("eth_getTransactionCount",[WALLET,"pending"])
+    ]);
+    diagnostic="\nNonce values: plan="+quantity(plan.walletStep.transaction.nonce,"plan.nonce").toString()+
+     ", latest="+rpcQuantity(latest,"eth_getTransactionCount.latest").toString()+", pending="+rpcQuantity(pending,"eth_getTransactionCount.pending").toString();
+   }catch{diagnostic="\nNonce diagnostic unavailable."}
+  }
+  nodes.status.textContent=error.message+diagnostic;
+ }finally{busy=false;update()}
+};
+discover();update();
+</script></html>

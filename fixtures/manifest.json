@@ -1,0 +1,20 @@
+{
+  "policy": {
+    "chain": "196",
+    "container": "0x0101010101010101010101010101010101010101",
+    "version": "fixture",
+    "model": "test-model",
+    "input": "1000000",
+    "output": "2000000"
+  },
+  "issuer": {
+    "key_ops": [
+      "verify"
+    ],
+    "ext": true,
+    "kty": "EC",
+    "x": "t5R7hJpJxLkQj6WoJdX1CsqRutpJQdYlExxS3KFMK7Q",
+    "y": "DYK8EhssSDnP2ieEe1aizo2y7PlCutUhKE0fk3B-FeI",
+    "crv": "P-256"
+  }
+}

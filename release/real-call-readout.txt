@@ -1,0 +1,14 @@
+SafeRouter Receipt Desk | studio call readout
+
+Requested and billed catalog model: deepseek-v4-flash
+Upstream response model: deepseek-v4.1-flash
+Serving line: C
+Input tokens: 37
+Output tokens: 8, all reported as reasoning tokens
+Cached input tokens: 0
+Finish reason: length
+Actual customer debit: $0.000004452000000000001
+Quoted calculation: (37 × $0.084 + 8 × $0.168) / 1,000,000 = $0.000004452
+Comparison unit: 4,452 nano-USD
+
+This controlled studio call reached its eight-token output limit. The demonstration verifies reported usage and billing. The signed receipt separately records the requested model, returned model, finish reason and reasoning-token count. Receipt signatures are application signatures. The original pre-signed quote and raw gateway response are preserved privately for independent replay.

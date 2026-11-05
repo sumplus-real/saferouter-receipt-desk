@@ -1,0 +1,9 @@
+{
+  "quote": {
+    "policyHash": "c274a8ce4304f7a2efcf32e68e1a9a3671f9c0610dfd77e467439e2998d9db7d",
+    "nonce": "7eb7d4c3375d3761e829eb530178d4eb0f50f32af528df71e55824cec1612678",
+    "maxCharge": "100",
+    "expires": "1793820725"
+  },
+  "buyerSignature": "aa0a78037a1696fc6cd5f3f4bd20ca6638b621fa14a0c7800a81529f79633ccdadec60d96a321e860df7840606fc0f6d57697a553eb93522a36840468d4d10d8"
+}

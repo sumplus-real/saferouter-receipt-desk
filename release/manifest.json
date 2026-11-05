@@ -1,0 +1,21 @@
+{
+  "issuer": {
+    "kty": "EC",
+    "crv": "P-256",
+    "x": "Ma5NcuKMkACtZqBPnZQu2nV-1jPboa9e2KF9SsNMa20",
+    "y": "95pq-vwWmgucQRvoEJj5DBLbvTy47cES0CGz12SzOLc"
+  },
+  "policy": {
+    "chain": "196",
+    "container": "0xde9a54ecaf32e6406fba0fcd78153ddc6777a63b",
+    "version": "v1",
+    "model": "deepseek-v4-flash",
+    "provider": "cm",
+    "activityProvider": "C",
+    "input": "84000000",
+    "output": "168000000",
+    "maxInput": "128",
+    "maxOutput": "8",
+    "requestProfile": "studio-text-v1"
+  }
+}

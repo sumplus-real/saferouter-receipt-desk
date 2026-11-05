@@ -1,0 +1,20 @@
+{
+  "quote": {
+    "policyHash": "51b4657cdef5d2ddcf9e302bf5533876e3fb6e860530a906c27283e9a85d3ce5",
+    "nonce": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "maxCharge": "250",
+    "expires": "100"
+  },
+  "receipt": {
+    "quoteHash": "b0c46ac5fd1547a0bc5b4ca391db7ed4f8b1145f6d444dfba423837dbf89269d",
+    "requestHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "model": "test-model",
+    "input": "25",
+    "output": "107",
+    "cached": "0",
+    "charge": "238",
+    "completed": "99"
+  },
+  "buyerSignature": "6c70f183943ee2ad942b85c0f45caee452165362b8a892e25d29c64c126d82b33241098a6661056721599b139678cca750da51e98445368d59700462858de1c4",
+  "issuerSignature": "379236163df8dbc7f24383f8b63b936047638d1afc8e9e1f85076c5287b0d4aad950f167afe4415a258a3993e286ef7de3ce5f1a5be373ab3c5862fc850477d0"
+}

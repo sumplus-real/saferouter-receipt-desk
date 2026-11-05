@@ -1,0 +1,24 @@
+{
+  "quote": {
+    "policyHash": "24ead7591877b117bae8eecf5b31c75d2bf03096652811934e6d9a0ae731e1d2",
+    "nonce": "97361e9ea4d4ae845e129f4b4009c7efa739f910d65fdf818718c3dd13258abf",
+    "maxCharge": "1000000",
+    "expires": "1793897037"
+  },
+  "buyerSignature": "bc09c628da0cab3e1087e35e341e6e607fe08183de932be4137767360f653d1c0a9df845b25c7ecca8ec8ff61718de991ff46c38efcc375189820b974ff2e10e",
+  "receipt": {
+    "quoteHash": "11ca761b071d179a66da95867bff24b2f2045c90c2d13edf2d7dbbfbee1ef869",
+    "requestHash": "d77c3d0b2d7ecfa768c795214a75c10703f26f2944158e1e86f382ce1a46324f",
+    "model": "deepseek-v4-flash",
+    "input": "37",
+    "output": "8",
+    "cached": "0",
+    "charge": "4452",
+    "completed": "1793896776",
+    "billedUsd": "0.000004452000000000001",
+    "returnedModel": "deepseek-v4.1-flash",
+    "finishReason": "length",
+    "reasoningTokens": "8"
+  },
+  "issuerSignature": "1fcd439786395f6f482876dd5f7ae82c2502c202a5707eb3a7670fc44cf8683c6ba415ea24e89c9def4e83c6899e9aa0573a930c8644cb964a2a559272afb11b"
+}
