@@ -19,6 +19,10 @@ const REGISTRY="0xd6efb7adcc9c83dc4924ad56f6a8e4e969b9adb6";
 const CONTAINER="0xde9a54ecaf32e6406fba0fcd78153ddc6777a63b";
 const IMPLEMENTATION="0x000000000000000000000000a85c4143d1d4a77f54b8e4ecc9e6d1418afea45f";
 const IMPLEMENTATION_SLOT="0x360894a13ba1a3210667c828492db98dca3e2076cc3735a920a3ca505d382bbc";
+const BINDING="0x68809fd2fb343aa57d0aeb7f33defe477c9666f9";
+const BINDING_IMPLEMENTATION="0x0000000000000000000000005ebf29b80789e548907c707530c3c7607c4347df";
+const TAPE_NAME="2.2.409.tape";
+const NAME_TAIL="000000000000000000000000000000000000000000000000000000000000000c322e322e3430392e746170650000000000000000000000000000000000000000";
 const BUDGET=90000000000000000n;
 const MINT_DATA="0x1b2ef1ca"+"0".repeat(127)+"1";
 const TAPEOUT_DATA="0x7bd3ac1d00000000000000000000000000000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000070000000200000300000000000000000000000000000000000000000000000000";
@@ -63,7 +67,7 @@ async function identity(){
 }
 function validPlan(value){
  check(value.chainId===196&&value.processorIndex===409&&value.processor===CPU&&value.transistors===TRANSISTORS,"Unexpected processor or chain");
- const step=value.walletStep;check(step&&["mint","tapeout","open","publish"].includes(step.stage),"Expected a verified wallet step");
+ const step=value.walletStep;check(step&&["mint","tapeout","open","publish","activate"].includes(step.stage),"Expected a verified wallet step");
  const tx=step.transaction;
  check(tx?.from===WALLET&&quantity(tx.chainId,"plan.chainId")===196n&&Object.keys(tx).sort().join(",")==="chainId,data,from,gas,gasPrice,nonce,to,value","Unexpected transaction fields");
  for(const key of ["gas","gasPrice","nonce","value"])quantity(tx[key],"plan."+key);
@@ -83,12 +87,27 @@ function validPlan(value){
   check(publication?.container===CONTAINER&&publication.registry===REGISTRY&&publication.implementation===IMPLEMENTATION&&publication.existingChunks===0,"Unexpected publication target");
   check(tx.to===REGISTRY&&quantity(tx.value,"plan.value")===0n&&tx.data.startsWith("0xfab2ed82"),"Expected a zero-value SiteRegistry file publication");
  }
+ if(step.stage==="activate"){
+  const binding=value.binding;
+  check(value.resolvedCircuit?.opened===true&&value.resolvedCircuit.id==="2"&&value.resolvedCircuit.container===CONTAINER,"Expected the opened studio circuit");
+  check(binding?.address===BINDING&&binding.implementation===BINDING_IMPLEMENTATION&&binding.name===TAPE_NAME&&
+   binding.container===CONTAINER&&binding.autoRenew===false&&binding.termDays===binding.months*30&&binding.monthlyFeeWei==="0"&&binding.nameLive===false&&binding.containerLive===false,"Unexpected activation target or prior active state");
+  check(Number.isInteger(binding.months)&&binding.months>=1&&binding.months<=120,"Activation term must be 1–120 months");
+  check(tx.to===BINDING&&quantity(tx.value,"plan.value")===0n&&tx.data===activationCalldata(binding.months),"Expected the exact zero-value activation call");
+ }
  const prior=BigInt(step.previousActualSpendWei),future=BigInt(step.futureReservedValueWei);
  check(prior>=0n&&future>=0n&&BigInt(step.budgetWei)===BUDGET,"Unexpected budget");
  check(BigInt(step.maxGasFeeWei)===quantity(tx.gas,"plan.gas")*quantity(tx.gasPrice,"plan.gasPrice"),"Displayed gas ceiling differs from the transaction");
  check(prior+quantity(tx.value,"plan.value")+quantity(tx.gas,"plan.gas")*quantity(tx.gasPrice,"plan.gasPrice")+future<=BUDGET,"Budget would exceed 0.09 OKB");
  check(prior+quantity(tx.value,"plan.value")+quantity(tx.gas,"plan.gas")*quantity(tx.gasPrice,"plan.gasPrice")+future===BigInt(step.maxTotalWithFutureValuesWei),"Budget arithmetic mismatch");
  return value;
+}
+function activationCalldata(months){
+ return "0x69e292ce"+(96).toString(16).padStart(64,"0")+CONTAINER.slice(2).padStart(64,"0")+
+  months.toString(16).padStart(64,"0")+NAME_TAIL;
+}
+function activationLiveCalldata(){
+ return "0xd6b062cd"+(64).toString(16).padStart(64,"0")+CONTAINER.slice(2).padStart(64,"0")+NAME_TAIL;
 }
 async function verifyPublication(value){
  if(value.walletStep.stage!=="publish")return;
@@ -141,7 +160,7 @@ nodes.plan.onchange=async()=>{
  try{
   const file=nodes.plan.files[0];check(file&&file.size<=65536,"Expected a plan JSON under 64 KiB");const candidate=validPlan(JSON.parse(await file.text()));await verifyPublication(candidate);plan=candidate;
   const s=plan.walletStep;
-  nodes.review.textContent=(s.stage==="publish"?"Publication path: "+plan.publication.path+"\nHTML SHA-256: "+plan.publication.sha256+"\nRegistry: "+REGISTRY+"\n\n":"")+"Step: "+s.stage+"\nPrior verified spend: "+okb(s.previousActualSpendWei)+" OKB\nCurrent value: "+okb(s.transaction.value)+" OKB\nCurrent maximum gas fee: "+okb(s.maxGasFeeWei)+" OKB\nFuture reserved transaction values: "+okb(s.futureReservedValueWei)+" OKB\nMaximum total including this step and future values: "+okb(s.maxTotalWithFutureValuesWei)+" OKB\nFuture gas is estimated before each later step.\n\n"+JSON.stringify(s.transaction,null,2);
+  nodes.review.textContent=(s.stage==="activate"?"Activation name: "+TAPE_NAME+"\nContainer: "+CONTAINER+"\nTerm: "+plan.binding.months+" month(s), "+plan.binding.termDays+" days total, no automatic renewal\nProtocol payment: 0 OKB; gas still applies\n\n":"")+(s.stage==="publish"?"Publication path: "+plan.publication.path+"\nHTML SHA-256: "+plan.publication.sha256+"\nRegistry: "+REGISTRY+"\n\n":"")+"Step: "+s.stage+"\nPrior verified spend: "+okb(s.previousActualSpendWei)+" OKB\nCurrent value: "+okb(s.transaction.value)+" OKB\nCurrent maximum gas fee: "+okb(s.maxGasFeeWei)+" OKB\nFuture reserved transaction values: "+okb(s.futureReservedValueWei)+" OKB\nMaximum total including this step and future values: "+okb(s.maxTotalWithFutureValuesWei)+" OKB\nFuture gas is estimated before each later step.\n\n"+JSON.stringify(s.transaction,null,2);
  }catch(error){nodes.status.textContent=error.message}update();
 };
 nodes.sign.onclick=async()=>{
@@ -166,6 +185,12 @@ nodes.sign.onclick=async()=>{
     const info=await read("eth_call",[{to:REGISTRY,data:fileInfoCalldata(plan.publication.path)},"latest"]);
     check(typeof info==="string"&&/^0x[a-f0-9]+$/i.test(info)&&info.length>=322&&BigInt("0x"+info.slice(258,322))===0n,"Publication path is occupied or metadata is invalid. Overwrites are refused.");
     check(await getter(CONTAINER,"0x8da5cb5b")===BigInt(WALLET),"Studio container ownership changed.");
+   }else if(s.stage==="activate"){
+    check(await read("eth_getStorageAt",[BINDING,IMPLEMENTATION_SLOT,"latest"])===BINDING_IMPLEMENTATION,"Activation implementation changed.");
+    check(await getter(BINDING,"0x8cfd3e40")===0n,"Activation is no longer free. Stop and refresh the plan.");
+    check(await getter(CONTAINER,"0x8da5cb5b")===BigInt(WALLET),"Studio container ownership changed.");
+    check(await getter(BINDING,"0xdcca979e"+CONTAINER.slice(2).padStart(64,"0"))===0n&&
+     await getter(BINDING,activationLiveCalldata())===0n,"Name or container is already activated. No further activation is needed.");
    }else{
     const fee=s.stage==="mint"?await getter(TRANSISTORS,"0x6817c76c")+await getter(TRANSISTORS,"0xb0e21e8a"):
      s.stage==="tapeout"?await getter(CPU,"0xadfb2b69"):await getter(OPENER,"0xc57981b5");

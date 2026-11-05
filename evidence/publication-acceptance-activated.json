@@ -1,0 +1,74 @@
+{
+  "verified": true,
+  "chainBytesVerified": true,
+  "chainId": 196,
+  "confirmationPolicy": "Two operators, at least eight-block depth, canonical receipt inclusion at read time",
+  "block": 75131620,
+  "blockHash": "0x6db58cf3aa25fad83d2c6565e011113357f839946229b8db2aa29c10a8d152e9",
+  "rpcProviders": [
+    "https://rpc.xlayer.tech",
+    "https://xlayer.drpc.org"
+  ],
+  "owner": "0x91000b484b5d4d5ba888c8a2f5dbdbbbcbf788d2",
+  "container": "0xde9a54ecaf32e6406fba0fcd78153ddc6777a63b",
+  "registry": "0xd6efb7adcc9c83dc4924ad56f6a8e4e969b9adb6",
+  "implementation": "0x000000000000000000000000a85c4143d1d4a77f54b8e4ecc9e6d1418afea45f",
+  "path": "v1/index.html",
+  "size": 12844,
+  "sha256": "c8582d26be5ec94aa9a9532d5039d931a7ad03db6d0e29396e2f2315d2ed4ab4",
+  "allBytesMatch": true,
+  "publicationTransaction": "0x2284935c743956cfb291e2a7c97dcb64508c0cd04df1ca1836303ce2083d1831",
+  "ledger": [
+    {
+      "hash": "0xe003f7cd27beb0046c800f3a4a3cbcf37c19da2e74e59d19137017de01f7b725",
+      "valueWei": "660000000000000",
+      "gasFeeWei": "1671980083599",
+      "totalWei": "661671980083599",
+      "gasUsed": 83599
+    },
+    {
+      "hash": "0x4bd8a37a7bb1b057c2c3216472d444a68e4b6cfecc35a97b91aea0f7ad696652",
+      "valueWei": "1300000000000000",
+      "gasFeeWei": "4438300221915",
+      "totalWei": "1304438300221915",
+      "gasUsed": 221915
+    },
+    {
+      "hash": "0xb524dd8169b3b1990a023efcbeff5934c16ab0c2973dec8df62a5a16a4634095",
+      "valueWei": "80000000000000000",
+      "gasFeeWei": "3344680167234",
+      "totalWei": "80003344680167234",
+      "gasUsed": 167234
+    },
+    {
+      "hash": "0x2284935c743956cfb291e2a7c97dcb64508c0cd04df1ca1836303ce2083d1831",
+      "valueWei": "0",
+      "gasFeeWei": "61796923089846",
+      "totalWei": "61796923089846",
+      "gasUsed": 3089846
+    },
+    {
+      "hash": "0x4d4fc7de62192cdf93835df0725daa6bf6937f01e5a10daac4fc37400efd3f0e",
+      "valueWei": "0",
+      "gasFeeWei": "3709640185482",
+      "totalWei": "3709640185482",
+      "gasUsed": 185482
+    }
+  ],
+  "totalSpendWei": "82034961523748076",
+  "remainingBudgetWei": "7965038476251924",
+  "walletBalanceWei": "7965038476251924",
+  "tape": "tape://2.2.409.tape/v1/index.html",
+  "browser": "https://2-2-409.tapekit.org/v1/index.html",
+  "statusPage": "https://2-2-409.tapekit.org/.tape/status",
+  "nameActivated": true,
+  "compatibilityBrowser": "https://2-2-409-open.tapekit.org/v1/index.html",
+  "gateway": {
+    "url": "https://2-2-409-open.tapekit.org/v1/index.html",
+    "httpStatus": 200,
+    "allBytesMatch": true,
+    "mode": "server",
+    "verifiedHeader": true
+  },
+  "browserInteraction": "Requires separate real-browser verification of the service worker and receipt import"
+}

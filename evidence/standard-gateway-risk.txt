@@ -1,0 +1,15 @@
+Standard TapeKit gateway access remains an open operational issue.
+
+The supervisor observed https://2-2-409.tapekit.org/v1/index.html remain on the initial tape:// title and an ellipsis in both IAB and a fresh Brave Main tab after about 20 seconds. This was observed after activation and successful publication acceptance.
+
+The compatibility URL https://2-2-409-open.tapekit.org/v1/index.html did serve the exact frozen HTML after an initial transient node-availability error. The supervisor successfully imported the real receipt and buyer public key, then demonstrated the altered-receipt signature rejection. This compatibility mode reads the chain on the gateway server. Browser receipt verification runs locally. Independent two-operator RPC verification was performed separately.
+
+Read-only source checks found HTTP 200 and JavaScript MIME types for boot.js, kernel/name.js, kernel/config.js, kernel/i18n.js, serve.js and sw.js. The current boot script sets the canonical name as document.title before waiting for service-worker registration. Inference: retaining the initial title points to bootstrap-module loading or execution before siteBoot, rather than proving a service-worker-only problem. Source fetch success does not establish execution in the user's browser. The exact browser failure has not been isolated.
+
+Use the verified -open compatibility URL as the primary submitted link. Keep gateway and RPC availability as a disclosed dependency. A later supervised diagnostic can inspect console/module network failures and service-worker status. No browser security setting or public service was changed during this diagnosis.
+
+Official source references
+https://2-2-409.tapekit.org/.tape/boot.js
+https://2-2-409.tapekit.org/.tape/serve.js
+https://github.com/TapeOutProtocol/TapeKit/blob/main/kernel/src/name.js
+https://github.com/TapeOutProtocol/TapeKit/blob/main/kernel/src/config.js

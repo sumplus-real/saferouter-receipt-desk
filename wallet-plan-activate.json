@@ -1,0 +1,89 @@
+{
+  "chainId": 196,
+  "block": 75131334,
+  "rpcProviders": [
+    "https://rpc.xlayer.tech",
+    "https://xlayer.drpc.org"
+  ],
+  "processorIndex": 409,
+  "processor": "0x39e44dba62811e87fde122ca4d6c082568a384d0",
+  "transistors": "0x5d7e99c4d1b71f4d24c9d53f41aed8196064a61f",
+  "resolvedCircuit": {
+    "id": "2",
+    "container": "0xde9a54ecaf32e6406fba0fcd78153ddc6777a63b",
+    "opened": true
+  },
+  "ledger": [
+    {
+      "hash": "0xe003f7cd27beb0046c800f3a4a3cbcf37c19da2e74e59d19137017de01f7b725",
+      "valueWei": "660000000000000",
+      "gasFeeWei": "1671980083599",
+      "totalWei": "661671980083599",
+      "gasUsed": 83599
+    },
+    {
+      "hash": "0x4bd8a37a7bb1b057c2c3216472d444a68e4b6cfecc35a97b91aea0f7ad696652",
+      "valueWei": "1300000000000000",
+      "gasFeeWei": "4438300221915",
+      "totalWei": "1304438300221915",
+      "gasUsed": 221915
+    },
+    {
+      "hash": "0xb524dd8169b3b1990a023efcbeff5934c16ab0c2973dec8df62a5a16a4634095",
+      "valueWei": "80000000000000000",
+      "gasFeeWei": "3344680167234",
+      "totalWei": "80003344680167234",
+      "gasUsed": 167234
+    },
+    {
+      "hash": "0x2284935c743956cfb291e2a7c97dcb64508c0cd04df1ca1836303ce2083d1831",
+      "valueWei": "0",
+      "gasFeeWei": "61796923089846",
+      "totalWei": "61796923089846",
+      "gasUsed": 3089846
+    }
+  ],
+  "binding": {
+    "address": "0x68809fd2fb343aa57d0aeb7f33defe477c9666f9",
+    "implementation": "0x0000000000000000000000005ebf29b80789e548907c707530c3c7607c4347df",
+    "name": "2.2.409.tape",
+    "container": "0xde9a54ecaf32e6406fba0fcd78153ddc6777a63b",
+    "months": 3,
+    "termDays": 90,
+    "autoRenew": false,
+    "monthlyFeeWei": "0",
+    "nameLive": false,
+    "containerLive": false,
+    "abiSource": "https://github.com/TapeOutProtocol/TapeKit/blob/main/SPEC.md#b6-payment-contract-domainbinding-uups-proxy"
+  },
+  "walletStep": {
+    "stage": "activate",
+    "transaction": {
+      "from": "0x91000b484b5d4d5ba888c8a2f5dbdbbbcbf788d2",
+      "to": "0x68809fd2fb343aa57d0aeb7f33defe477c9666f9",
+      "value": "0x0",
+      "data": "0x69e292ce0000000000000000000000000000000000000000000000000000000000000060000000000000000000000000de9a54ecaf32e6406fba0fcd78153ddc6777a63b0000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000000c322e322e3430392e746170650000000000000000000000000000000000000000",
+      "chainId": "0xc4",
+      "gas": "0x371d2",
+      "gasPrice": "0x1406f40",
+      "nonce": "0x4"
+    },
+    "budgetWei": "90000000000000000",
+    "previousActualSpendWei": "82031251883562594",
+    "futureReservedValueWei": "0",
+    "estimatedGas": [
+      "188121",
+      "188121"
+    ],
+    "maxGasFeeWei": "4740666000000",
+    "maxTotalWithFutureValuesWei": "82035992549562594",
+    "walletBalanceWei": "7968748116437406",
+    "snapshotBlock": 75131334
+  },
+  "notes": [
+    "Zero native protocol payment; gas is still spent.",
+    "Fixed 90-day activation term. No automatic renewal. Renew manually before expiry if still needed.",
+    "Monthly fee and active status are checked again by the wallet page immediately before a user signing request.",
+    "Publication is already confirmed and is never resent by this plan."
+  ]
+}

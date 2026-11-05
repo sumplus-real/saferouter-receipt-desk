@@ -1,0 +1,115 @@
+{
+  "chainId": 196,
+  "block": 75126808,
+  "blockHash": "0x7adaf9167b0930ca813d5438f58749ba775b775241f97b272de0f4f63b767247",
+  "rpcProviders": [
+    "https://rpc.xlayer.tech",
+    "https://xlayer.drpc.org"
+  ],
+  "interfaceSource": "https://tapeout.net/app/assets/index-DsAkZLRU.js",
+  "processorIndex": 409,
+  "processor": "0x39e44dba62811e87fde122ca4d6c082568a384d0",
+  "transistors": "0x5d7e99c4d1b71f4d24c9d53f41aed8196064a61f",
+  "supplyCap": "100000",
+  "minted": "141",
+  "remaining": "99859",
+  "feasible": true,
+  "fees": {
+    "transistorPrice": {
+      "wei": "0",
+      "OKB": "0"
+    },
+    "mintProtocolFee": {
+      "wei": "660000000000000",
+      "OKB": "0.00066"
+    },
+    "mintTransactionValue": {
+      "wei": "660000000000000",
+      "OKB": "0.00066"
+    },
+    "tapeout": {
+      "wei": "1300000000000000",
+      "OKB": "0.0013"
+    },
+    "open": {
+      "wei": "80000000000000000",
+      "OKB": "0.08"
+    },
+    "totalBeforeGas": {
+      "wei": "81960000000000000",
+      "OKB": "0.08196"
+    }
+  },
+  "gas": {
+    "included": false,
+    "gasPriceWeiObservations": [
+      "0x1312d01",
+      "0x1406f40"
+    ],
+    "note": "Estimate each dependent transaction against its actual preceding confirmed state."
+  },
+  "netlist": {
+    "bytes": "0x00000002000003",
+    "inputs": 2,
+    "outputs": 1,
+    "NAND": 1
+  },
+  "transactions": [
+    {
+      "stage": "mint",
+      "chainId": 196,
+      "from": "0x91000b484b5d4d5ba888c8a2f5dbdbbbcbf788d2",
+      "to": "0x5d7e99c4d1b71f4d24c9d53f41aed8196064a61f",
+      "value": "0x25844398d4000",
+      "data": "0x1b2ef1ca00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001"
+    },
+    {
+      "stage": "tapeout-after-mint-confirmation",
+      "chainId": 196,
+      "from": "0x91000b484b5d4d5ba888c8a2f5dbdbbbcbf788d2",
+      "to": "0x39e44dba62811e87fde122ca4d6c082568a384d0",
+      "value": "0x49e57d6354000",
+      "data": "0x7bd3ac1d00000000000000000000000000000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000070000000200000300000000000000000000000000000000000000000000000000"
+    },
+    {
+      "stage": "open-after-tapeout-receipt-verification",
+      "chainId": 196,
+      "from": "0x91000b484b5d4d5ba888c8a2f5dbdbbbcbf788d2",
+      "to": "0x536add8f30f03b69f6fbf29d425a816a0dc50106",
+      "value": "0x11c37937e080000",
+      "function": "open(address,uint256)",
+      "arguments": [
+        "0x39e44dba62811e87fde122ca4d6c082568a384d0",
+        "<CIRCUIT_ID_FROM_SUCCESSFUL_TAPEOUT_RECEIPT>"
+      ],
+      "dataTemplate": "0x0a0e5c9d00000000000000000000000039e44dba62811e87fde122ca4d6c082568a384d0<CIRCUIT_ID_AS_64_HEX_DIGITS>"
+    }
+  ],
+  "receiptCommand": "python3 plan-container.py --processor 409 --wallet 0x91000b484b5d4d5ba888c8a2f5dbdbbbcbf788d2 --mint-tx <MINT_HASH> --tapeout-tx <TAPEOUT_HASH>",
+  "resolvedCircuit": {
+    "id": "2",
+    "container": "0xde9a54ecaf32e6406fba0fcd78153ddc6777a63b",
+    "opened": true,
+    "tape": "tape://2.2.409.tape/v1/index.html"
+  },
+  "openTransaction": null,
+  "siteRegistry": {
+    "address": "0xd6efb7adcc9c83dc4924ad56f6a8e4e969b9adb6",
+    "implementation": "0x000000000000000000000000a85c4143d1d4a77f54b8e4ecc9e6d1418afea45f",
+    "openedContainer": true,
+    "checkedPath": "v1/index.html",
+    "existingChunks": 0
+  },
+  "budget": {
+    "limitWei": "90000000000000000",
+    "actualAcquisitionSpendWei": "81969454960472748",
+    "remainingWei": "8030545039527252",
+    "walletBalanceWei": "8030545039527252"
+  },
+  "publicationStatus": "Awaiting the real release manifest, matching HTML, verified live receipt and buyer public key.",
+  "notes": [
+    "No signing, broadcast, or private-key access occurs in this tool.",
+    "Values are a confirmed-block snapshot. Refresh fees and estimate gas before an authorized transaction.",
+    "Stage dependencies require confirmed receipts. NFT ids come from matching receipt events, never nextId."
+  ]
+}

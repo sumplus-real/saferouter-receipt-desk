@@ -24,8 +24,8 @@ const plan = {...opened, publication:{container, registry, path:"v1/index.html",
     budgetWei:"90000000000000000",previousActualSpendWei:String(prior),futureReservedValueWei:"0",
     maxGasFeeWei:String(gas * gasPrice),maxTotalWithFutureValuesWei:String(prior + gas * gasPrice)}};
 
-async function exercise({mutate = () => {}, occupied = false} = {}) {
-  const candidate = structuredClone(plan);
+async function exercise({mutate = () => {}, occupied = false, activation = false, feeChanged = false, alreadyActive = false} = {}) {
+  const candidate = structuredClone(activation ? activationPlan : plan);
   mutate(candidate);
   const ids = ["providers","connect","plan","review","sign","status","discover","switch"];
   const nodes = Object.fromEntries(ids.map(id => [id, {value:"",textContent:"",append(option) {this.value = option.value;}}]));
@@ -35,15 +35,17 @@ async function exercise({mutate = () => {}, occupied = false} = {}) {
   const provider = {request:async ({method, params}) => {
     if (method === "eth_accounts" || method === "eth_requestAccounts") return [wallet];
     if (method === "eth_chainId") return 196;
-    if (method === "eth_getTransactionCount") return params[1] === "pending" ? 3 : "0x03";
-    if (method === "eth_blockNumber") return "0x" + (opened.block + 10).toString(16);
+    if (method === "eth_getTransactionCount") return params[1] === "pending" ? Number(BigInt(candidate.walletStep.transaction.nonce)) : candidate.walletStep.transaction.nonce;
+    if (method === "eth_blockNumber") return "0x" + (candidate.block + 10).toString(16);
     if (method === "eth_getBalance") return "0x" + BigInt(opened.budget.walletBalanceWei).toString(16);
-    if (method === "eth_estimateGas") return 1000000;
+    if (method === "eth_estimateGas") return activation ? 188121 : 1000000;
     if (method === "eth_gasPrice") return Number(gasPrice);
-    if (method === "eth_getStorageAt") return opened.siteRegistry.implementation;
+    if (method === "eth_getStorageAt") return activation ? candidate.binding.implementation : opened.siteRegistry.implementation;
     if (method === "eth_call" && params[0].data.startsWith("0x6c609107")) {
       return "0x" + "0".repeat(256) + (occupied ? "1" : "0").padStart(64,"0");
     }
+    if (method === "eth_call" && params[0].data === "0x8cfd3e40") return "0x"+(feeChanged?"1":"0").padStart(64,"0");
+    if (method === "eth_call" && (params[0].data.startsWith("0xdcca979e")||params[0].data.startsWith("0xd6b062cd"))) return "0x"+(alreadyActive?"1":"0").padStart(64,"0");
     if (method === "eth_call" && params[0].data === "0x8da5cb5b") return "0x" + wallet.slice(2).padStart(64,"0");
     if (method === "eth_sendTransaction") {sends++;return "0x" + "ab".repeat(32);}
     throw new Error("Unexpected fake RPC " + method);
@@ -59,6 +61,7 @@ async function exercise({mutate = () => {}, occupied = false} = {}) {
   if (!nodes.sign.disabled) await nodes.sign.onclick();
   return {sends,status:nodes.status.textContent};
 }
+const activationPlan = JSON.parse(await readFile(new URL("./wallet-plan-activate.json",import.meta.url),"utf8"));
 assert.equal((await exercise()).sends, 1);
 const tampered = await exercise({mutate:p => {p.publication.sha256 = "0x" + "00".repeat(32);}});
 assert.equal(tampered.sends, 0);
@@ -69,3 +72,14 @@ assert.match(occupied.status, /occupied/);
 assert.equal((await exercise({mutate:p => {p.walletStep.previousActualSpendWei = "90000000000000000";}})).sends, 0);
 assert.equal((await exercise({mutate:p => {p.walletStep.transaction.to = container;}})).sends, 0);
 console.log("PASS: offline publish signing request; altered SHA, occupied path, budget overflow and wrong registry all block signing");
+
+const activationPositive=await exercise({activation:true});
+assert.equal(activationPositive.sends,1,activationPositive.status);
+assert.equal((await exercise({activation:true,mutate:p=>{p.binding.name="wrong.tape";}})).sends,0);
+assert.equal((await exercise({activation:true,mutate:p=>{p.binding.container=registry;}})).sends,0);
+assert.equal((await exercise({activation:true,mutate:p=>{p.walletStep.transaction.value="0x1";}})).sends,0);
+const feeChanged = await exercise({activation:true,feeChanged:true});
+assert.equal(feeChanged.sends,0);assert.match(feeChanged.status,/no longer free/);
+const alreadyActive = await exercise({activation:true,alreadyActive:true});
+assert.equal(alreadyActive.sends,0);assert.match(alreadyActive.status,/already activated/);
+console.log("PASS: offline zero-value activation request; incorrect name/container/value, changed fee and redundant activation blocked");
